@@ -4,40 +4,8 @@ import type React from "react"
 import { useState } from "react"
 import MatchDetails from "@/components/matchDetails"
 import { AnimatePresence } from "motion/react"
+import { MatchListProps, Team } from "@/types/interfaces"
 
-interface Player {
-  id: number
-  name: string
-  goals: number
-  assists: number
-  saves: number
-  profile_img?: string
-}
-
-interface Team {
-  players: Player[]
-  name: string
-}
-
-interface TopPlayer {
-  id: number
-  name: string
-}
-
-interface Match {
-  id: number
-  created_at: string
-  team1: Team
-  team2: Team
-  top_scorer: TopPlayer
-  top_assistances: TopPlayer
-  mvp: TopPlayer
-}
-
-interface MatchListProps {
-  matches: Match[]
-  players: Player[]
-}
 
 const MatchList: React.FC<MatchListProps> = ({ matches, players }) => {
   const [expandedMatch, setExpandedMatch] = useState<number | null>(null)
