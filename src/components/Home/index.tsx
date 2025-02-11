@@ -6,12 +6,13 @@ import PlayerStats from "@/components/playerStats"
 import LoadingScreen from "@/components/loadingScreen"
 import * as motion from "motion/react-client"
 import { getMatches, getPlayers } from '@/lib/database'
+import { Match, Player } from "@/types/interfaces"
 
 export default function Home() {
   const [loading, setLoading] = useState<boolean>(true)
   const [activeTab, setActiveTab] = useState<"matches" | "players">("matches")
-  const [matchesData, setMatchesData] = useState<any[]>([])
-  const [playersData, setPlayersData] = useState<any[]>([])
+  const [matchesData, setMatchesData] = useState<Match[]>([])
+  const [playersData, setPlayersData] = useState<Player[]>([])
 
   useEffect(() => {
     const fetchData = async () => {

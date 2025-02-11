@@ -16,7 +16,7 @@ interface Player {
   matches_losses: number
 }
 
-interface PlayerStatsProps {
+export interface PlayerStatsProps {
   players: Player[]
 }
 
