@@ -5,49 +5,32 @@ import MatchList from "@/components/matchList"
 import PlayerStats from "@/components/playerStats"
 import LoadingScreen from "@/components/loadingScreen"
 import * as motion from "motion/react-client"
+import { getMatches, getPlayers } from '@/lib/database'
 
 export default function Home() {
   const [loading, setLoading] = useState<boolean>(true)
   const [activeTab, setActiveTab] = useState<"matches" | "players">("matches")
-  const [matchesData, setMatchesData] = useState([])
-  const [playersData, setPlayersData] = useState([])
-
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+  const [matchesData, setMatchesData] = useState<any[]>([])
+  const [playersData, setPlayersData] = useState<any[]>([])
 
   useEffect(() => {
-    const fetchMatches = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(apiUrl + '/api/matches')
-        if (!response.ok) {
-          throw new Error('Failed to fetch matches')
-        }
-        const data = await response.json()
-        setMatchesData(data)
+        const [matches, players] = await Promise.all([
+          getMatches(),
+          getPlayers()
+        ])
+        setMatchesData(matches)
+        setPlayersData(players)
       } catch (error) {
-        console.error('Error loading matches:', error)
+        console.error('Error fetching data:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchMatches()
-    const fetchPlayers = async () => {
-      try {
-        const response = await fetch(apiUrl + '/api/players')
-        if (!response.ok) {
-          throw new Error('Failed to fetch players')
-        }
-        const data = await response.json()
-        setPlayersData(data)
-      } catch (error) {
-        console.error('Error loading players:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchPlayers()
-  }, [apiUrl])
+    fetchData()
+  }, [])
 
   if (loading) return <LoadingScreen />
   
