@@ -7,10 +7,11 @@ import LoadingScreen from "@/components/loadingScreen"
 import * as motion from "motion/react-client"
 import { getMatches, getPlayers } from '@/lib/database'
 import { Match, Player } from "@/types/interfaces"
+import Mundialito from "../mundialito"
 
 export default function Home() {
   const [loading, setLoading] = useState<boolean>(true)
-  const [activeTab, setActiveTab] = useState<"matches" | "players">("matches")
+  const [activeTab, setActiveTab] = useState<"matches" | "players" | "mundialito">("matches")
   const [matchesData, setMatchesData] = useState<Match[]>([])
   const [playersData, setPlayersData] = useState<Player[]>([])
 
@@ -52,13 +53,23 @@ export default function Home() {
             scale: 1.1
           }}
           whileTap={{ scale: 0.9 }}
-          className={`px-4 py-2 rounded ${activeTab === "players" ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-400 hover:text-white transition-all duration-200"}`}
+          className={`mr-2 px-4 py-2 rounded ${activeTab === "players" ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-400 hover:text-white transition-all duration-200"}`}
           onClick={() => setActiveTab("players")}
         >
           Jugadores
         </motion.button>
+        <motion.button
+          whileHover={{
+            scale: 1.1
+          }}
+          whileTap={{ scale: 0.9 }}
+          className={`px-4 py-2 rounded ${activeTab === "mundialito" ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-400 hover:text-white transition-all duration-200"}`}
+          onClick={() => setActiveTab("mundialito")}
+        >
+          Mundialito
+        </motion.button>
       </div>
-      {activeTab === "matches" ? <MatchList matches={matchesData} players={playersData} /> : <PlayerStats players={playersData} />}
+      {activeTab === "matches" ? <MatchList matches={matchesData} players={playersData} /> : activeTab === "players" ?<PlayerStats players={playersData} /> : activeTab === "mundialito" ? <Mundialito matches={matchesData} players={playersData} /> : null}
     </div>
-  )
+  ) 
 }
