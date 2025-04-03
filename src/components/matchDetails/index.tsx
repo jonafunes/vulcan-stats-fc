@@ -51,15 +51,15 @@ const PlayerStats: React.FC<{ player: Player, playersData: Player[], primaryColo
         />
       </div>
       <div className="flex-grow">
-        <h4 className="font-semibold text-sm mb-1 ">{player.name}</h4>
-        <div className="grid grid-cols-3 gap-1 text-xs text-black">
-          <div className="bg-blue-100 p-1 rounded text-center">
-            <span className="font-bold">{player.goals}</span> Goles
+        <h4 className="font-semibold text-sm mb-1 text-center md:text-start">{player.name}</h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-1 text-xs text-black">
+          <div className="bg-blue-100 p-1 md:rounded text-center w-full">
+            <span className="font-bold">{player.goals}</span> Gol
           </div>
-          <div className="bg-green-100 p-1 rounded text-center">
+          <div className="bg-green-100 p-1 md:rounded text-center w-full">
             <span className="font-bold">{player.assists}</span> Asis
           </div>
-          <div className="bg-yellow-100 p-1 rounded text-center">
+          <div className="bg-yellow-100 p-1 md:rounded text-center w-full">
             <span className="font-bold">{player.saves}</span> Salv
           </div>
         </div>
