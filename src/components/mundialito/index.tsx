@@ -163,7 +163,7 @@ const Mundialito: React.FC<MundialitoProps> = ({ matches, players }) => {
     <div className="bg-white rounded-lg shadow p-4">
       <h2 className="text-xl font-bold mb-4">Mundialito</h2>
       <div className="space-y-4">
-        {playerProgress.map(({ player, phase, matchesInPhase, eliminated, lastPhaseResults }: PlayerProgress, idx: number) => (
+        {playerProgress.map(({ player, phase, matchesInPhase, eliminated, lastPhaseResults }: PlayerProgress) => (
           <div 
             key={player.id} 
             className={`flex flex-col p-4 rounded-lg border ${getPhaseColor(phase)}`}
