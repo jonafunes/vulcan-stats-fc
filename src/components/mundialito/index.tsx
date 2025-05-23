@@ -27,97 +27,120 @@ const PHASES = {
 
 const Mundialito: React.FC<MundialitoProps> = ({ matches, players }) => {
   const calculatePlayerProgress = (playerId: number): PlayerProgress => {
-    // Ordenar partidos por fecha, del más reciente al más antiguo
-    const sortedMatches = [...matches].sort((a, b) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    )
+    // Ordenar partidos por fecha, del más antiguo al más reciente (para manejar reseteos)
+    const sortedMatches = [...matches].sort((a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    const player = players.find(p => p.id === playerId) as Player;
 
-    const player = players.find(p => p.id === playerId) as Player
-    let currentPhase = PHASES.GROUPS
-    let matchesInPhase = 0
-    let eliminated = false
-    let lastPhaseResults: string[] = []
+    // Estado de mundialito para el jugador
+    let currentPhase = PHASES.GROUPS;
+    let matchesInPhase = 0;
+    let eliminated = false;
+    let lastPhaseResults: string[] = [];
+    let defeatsInGroups = 0;
+    let groupResults: string[] = [];
+    let knockoutPhaseIndex = 0;
+    const knockoutPhases = [PHASES.ROUND_16, PHASES.QUARTER, PHASES.SEMI, PHASES.FINAL, PHASES.CHAMPION];
+    let knockoutActive = false;
 
-    // Analizar cada partido
     for (const match of sortedMatches) {
-      const playerInTeam1 = match.team1.players.some(p => p.id === playerId)
-      const playerInTeam2 = match.team2.players.some(p => p.id === playerId)
-      
-      if (!playerInTeam1 && !playerInTeam2) continue
+      const playerInTeam1 = match.team1.players.some(p => p.id === playerId);
+      const playerInTeam2 = match.team2.players.some(p => p.id === playerId);
+      if (!playerInTeam1 && !playerInTeam2) continue;
 
-      const team1Score = match.team1.players.reduce((total, p) => total + p.goals, 0)
-      const team2Score = match.team2.players.reduce((total, p) => total + p.goals, 0)
-      
-      const playerWon = (playerInTeam1 && team1Score > team2Score) || 
-                       (playerInTeam2 && team2Score > team1Score)
-      const draw = team1Score === team2Score
+      const team1Score = match.team1.players.reduce((total, p) => total + p.goals, 0);
+      const team2Score = match.team2.players.reduce((total, p) => total + p.goals, 0);
+      const playerWon = (playerInTeam1 && team1Score > team2Score) || (playerInTeam2 && team2Score > team1Score);
+      const draw = team1Score === team2Score;
+      const playerLost = !playerWon && !draw;
 
-      // Lógica para fase de grupos
-      if (currentPhase === PHASES.GROUPS) {
-        matchesInPhase++
-        if (playerWon || draw) {
-          lastPhaseResults.push('✅')
-          if (matchesInPhase >= 3 || (matchesInPhase >= 2 && lastPhaseResults.filter(r => r === '✅').length >= 2)) {
-            currentPhase = PHASES.ROUND_16
-            matchesInPhase = 0
-            lastPhaseResults = []
-          }
-        } else {
-          lastPhaseResults.push('❌')
-          if (matchesInPhase >= 3 || (matchesInPhase >= 2 && lastPhaseResults.filter(r => r === '❌').length >= 2)) {
-            eliminated = true
-          }
-        }
-      }
-      // Fases eliminatorias
-      else {
+      // Fase de grupos
+      if (!knockoutActive) {
+        matchesInPhase++;
         if (playerWon) {
-          lastPhaseResults.push('✅')
-          matchesInPhase++
-          // Avanzar a la siguiente fase
-          switch (currentPhase) {
-            case PHASES.ROUND_16:
-              currentPhase = PHASES.QUARTER
-              break
-            case PHASES.QUARTER:
-              currentPhase = PHASES.SEMI
-              break
-            case PHASES.SEMI:
-              currentPhase = PHASES.FINAL
-              break
-            case PHASES.FINAL:
-              currentPhase = PHASES.CHAMPION
-              break
-          }
-          matchesInPhase = 0
-          lastPhaseResults = []
+          groupResults.push('✅');
+        } else if (draw) {
+          groupResults.push('➖');
         } else {
-          lastPhaseResults.push('❌')
-          eliminated = true
+          groupResults.push('❌');
+          defeatsInGroups++;
+        }
+        // Eliminación en grupos
+        if (defeatsInGroups === 2) {
+          eliminated = true;
+        }
+        // Si jugó 3 partidos o fue eliminado, decidir pase o reset
+        if (matchesInPhase === 3 || eliminated) {
+          if (!eliminated) {
+            knockoutActive = true;
+            knockoutPhaseIndex = 0;
+            currentPhase = knockoutPhases[knockoutPhaseIndex];
+            matchesInPhase = 0;
+            lastPhaseResults = [];
+          } else {
+            // RESET: volver a fase de grupos
+            currentPhase = PHASES.GROUPS;
+            matchesInPhase = 0;
+            defeatsInGroups = 0;
+            groupResults = [];
+            lastPhaseResults = [];
+            eliminated = false;
+            knockoutActive = false;
+            continue; // este partido es el 1 del siguiente mundialito
+          }
+        }
+        lastPhaseResults = [...groupResults];
+      } else {
+        // Fases eliminatorias
+        matchesInPhase = 1; // siempre 1 partido por fase
+        if (playerWon) {
+          lastPhaseResults = ['✅'];
+          knockoutPhaseIndex++;
+          if (knockoutPhaseIndex < knockoutPhases.length) {
+            currentPhase = knockoutPhases[knockoutPhaseIndex];
+          }
+        } else {
+          lastPhaseResults = ['❌'];
+          eliminated = true;
+        }
+        // Si es eliminado, resetear para el siguiente partido
+        if (eliminated) {
+          currentPhase = PHASES.GROUPS;
+          matchesInPhase = 0;
+          defeatsInGroups = 0;
+          groupResults = [];
+          lastPhaseResults = [];
+          eliminated = false;
+          knockoutActive = false;
+          continue; // este partido es el 1 del siguiente mundialito
         }
       }
+    }
 
-      if (eliminated) break
+    // Si terminó campeón
+    if (currentPhase === PHASES.CHAMPION) {
+      lastPhaseResults = ['🏆'];
     }
 
     return {
       player,
       phase: currentPhase,
       matchesInPhase,
-      eliminated,
-      lastPhaseResults
-    }
+      eliminated: false, // solo es true durante el ciclo, al mostrar el estado siempre está en competencia o reiniciado
+      lastPhaseResults,
+    };
   }
 
-  const playerProgress = players.map(player => calculatePlayerProgress(player.id))
+  const playerProgress: PlayerProgress[] = players.map((player: Player) => calculatePlayerProgress(player.id));
   
   // Ordenar jugadores por fase alcanzada
-  const phaseOrder = Object.values(PHASES)
-  playerProgress.sort((a, b) => {
-    const phaseA = phaseOrder.indexOf(a.phase)
-    const phaseB = phaseOrder.indexOf(b.phase)
-    return phaseB - phaseA
-  })
+  const phaseOrder = Object.values(PHASES);
+  playerProgress.sort((a: PlayerProgress, b: PlayerProgress) => {
+    const phaseA = phaseOrder.indexOf(a.phase);
+    const phaseB = phaseOrder.indexOf(b.phase);
+    return phaseB - phaseA;
+  });
 
   const getPhaseColor = (phase: string): string => {
     switch (phase) {
@@ -140,7 +163,7 @@ const Mundialito: React.FC<MundialitoProps> = ({ matches, players }) => {
     <div className="bg-white rounded-lg shadow p-4">
       <h2 className="text-xl font-bold mb-4">Mundialito</h2>
       <div className="space-y-4">
-        {playerProgress.map(({ player, phase, matchesInPhase, eliminated, lastPhaseResults }) => (
+        {playerProgress.map(({ player, phase, matchesInPhase, eliminated, lastPhaseResults }: PlayerProgress, idx: number) => (
           <div 
             key={player.id} 
             className={`flex flex-col p-4 rounded-lg border ${getPhaseColor(phase)}`}
@@ -162,7 +185,7 @@ const Mundialito: React.FC<MundialitoProps> = ({ matches, players }) => {
                       'En competencia'}
               </span>
               <div className="flex gap-1">
-                {lastPhaseResults.map((result, index) => (
+                {lastPhaseResults.map((result: string, index: number) => (
                   <span key={index}>{result}</span>
                 ))}
               </div>
