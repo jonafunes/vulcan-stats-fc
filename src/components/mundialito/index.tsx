@@ -53,7 +53,7 @@ const Mundialito: React.FC<MundialitoProps> = ({ matches, players }) => {
       const team2Score = match.team2.players.reduce((total, p) => total + p.goals, 0);
       const playerWon = (playerInTeam1 && team1Score > team2Score) || (playerInTeam2 && team2Score > team1Score);
       const draw = team1Score === team2Score;
-      const playerLost = !playerWon && !draw;
+      //const playerLost = !playerWon && !draw;
 
       // Fase de grupos
       if (!knockoutActive) {
